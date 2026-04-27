@@ -1,10 +1,16 @@
 spring:
+  profiles:
+    active: main
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://127.127.126.26:5432/medical
+    url: jdbc:postgresql://127.127.126.26:5432/med
     username: postgres
     password: 1234
-  jackson:
-    liquibase:
-      enabled: true
-      change-log: classpath:/db/changelog/db.changelog-master.yaml
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    database: POSTGRESQL
+    show-sql: true
+  liquibase:
+    enabled: true
+    change-log: classpath:/db/changelog/db.changelog-master.yaml

@@ -1,10 +1,16 @@
 package com.medical.med.model;
 
 import jakarta.persistence.*;
+import lombok.*;
 
 import java.time.LocalDate;
 
 @Entity
+@Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "patients")
 public class Patient {
 
@@ -20,6 +26,7 @@ public class Patient {
 
     private LocalDate dateOfBirth;
 
+    @Enumerated(EnumType.STRING)
     private SexType sex;
 
     @Column(unique = true)
@@ -28,5 +35,10 @@ public class Patient {
     @Column(unique = true)
     private String email;
 
+    @Column(unique = true)
+    private String SNILS;
+
+    @OneToOne(mappedBy = "patient")
+    private PolicyOMS policyOMS;
 }
 
