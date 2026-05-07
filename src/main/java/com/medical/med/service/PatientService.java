@@ -11,6 +11,10 @@ import java.util.Optional;
 
 public interface PatientService {
 
+    Patient updatePatient(Patient patient);
+
+    void deletedPatient(Long patientId);
+
     Patient findPatientById(Long patientId);
 
     Patient createPatient(Patient patient, Long policyId);

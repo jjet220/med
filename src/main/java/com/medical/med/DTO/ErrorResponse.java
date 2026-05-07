@@ -1,5 +1,6 @@
-package com.medical.med.exeption;
+package com.medical.med.DTO;
 
+import com.medical.med.exeption.ErrorDetail;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

@@ -9,12 +9,6 @@ public class ResourceNotFoundException extends BusinessException{
                 HttpStatus.NOT_FOUND);
     }
 
-    public ResourceNotFoundException(String resourceName, String field, String value) {
-        super(Code.RESOURCE_NOT_FOUND.name(),
-                String.format("%s не найден с %s: %s", resourceName, field, value)
-                        ,HttpStatus.NOT_FOUND);
-    }
-
     public ResourceNotFoundException(String field, String value) {
         super(Code.RESOURCE_NOT_FOUND.name(),
                 String.format("%s не найден со зачением: %s", field, value)

@@ -8,9 +8,26 @@ spring:
     password: 1234
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none
     database: POSTGRESQL
     show-sql: true
   liquibase:
     enabled: true
+    drop-first: true
     change-log: classpath:/db/changelog/db.changelog-master.yaml
+    default-schema: medic
+  logging:
+    level:
+      root: INFO
+      com.medical.med: DEBUG
+      org.springframework: WARN
+      org.hibernate: WARN
+    pattern:
+      console: "%d{yyyy-MM-dd HH:mm:ss} - %-5level [%thread] %logger{36} - %msg%n"
+    file:
+      name: logs/medical-app.log
+      max-size: 10MB
+      max-history: 30
+app:
+  database:
+    schema: medic

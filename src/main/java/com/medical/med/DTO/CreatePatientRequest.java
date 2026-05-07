@@ -2,7 +2,6 @@ package com.medical.med.DTO;
 
 import com.medical.med.annotation.validation.ValidPhone;
 import com.medical.med.annotation.validation.ValidSNILS;
-import com.medical.med.model.Patient;
 import com.medical.med.model.SexType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -47,19 +46,4 @@ public class CreatePatientRequest {
     private String SNILS;
 
     private Long policyId;
-
-    public Patient toEntity() {
-        return Patient.builder()
-                .id(this.id)
-                .surname(this.surname)
-                .name(this.name)
-                .patronymic(this.patronymic)
-                .dateOfBirth(this.dateOfBirth)
-                .sex(this.sex)
-                .phoneNumber(this.phoneNumber)
-                .email(this.email)
-                .SNILS(this.SNILS)
-                .build();
-    }
-
 }
