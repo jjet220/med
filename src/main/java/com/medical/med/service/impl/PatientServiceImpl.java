@@ -1,13 +1,23 @@
 package com.medical.med.service.impl;
 
+import com.medical.med.DTO.*;
+import com.medical.med.DTO.request.CreatePatientRequest;
+import com.medical.med.DTO.response.AttachmentResponse;
+import com.medical.med.DTO.response.PatientResponse;
+import com.medical.med.DTO.response.PatientWithActiveAttachmentResponse;
 import com.medical.med.exeption.ConflictException;
 import com.medical.med.exeption.ResourceNotFoundException;
+import com.medical.med.mapper.AttachmentMapper;
+import com.medical.med.mapper.PatientMapper;
+import com.medical.med.model.Attachment;
 import com.medical.med.model.Patient;
 import com.medical.med.model.PolicyOMS;
-import com.medical.med.model.SexType;
+import com.medical.med.model.enums.SexType;
+import com.medical.med.repository.AttachmentRepository;
 import com.medical.med.repository.PatientRepository;
 import com.medical.med.repository.PolicyRepository;
 import com.medical.med.service.PatientService;
+import com.medical.med.service.PolicyService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -23,20 +33,33 @@ import java.util.Optional;
 public class PatientServiceImpl implements PatientService {
     private final PatientRepository patientRepository;
     private final PolicyRepository policyRepository;
+    private final PolicyService policyService;
+    private final PatientMapper patientMapper;
+    private final AttachmentMapper attachmentMapper;
+    private final AttachmentRepository attachmentRepository;
 
     @Override
-    public Patient updatePatient(Patient patient) {
-        log.debug("Обнволение информации пациента: {}", patient);
-        return patientRepository.save(patient);
+    public PatientResponse updatePatient(CreatePatientRequest patient, Long patientId) {
+        log.debug("Обнволение информации пациента: {}", patientId);
+
+        Patient existingPatient = patientRepository.findById(patientId).orElseThrow(
+                () -> {
+                    log.error("Пациент не найден с id: {}", patientId);
+                    return new ResourceNotFoundException("Patient", patientId);
+                }
+        );
+
+        Patient updated = patientRepository.save(existingPatient);
+        return patientMapper.toResponse(updated);
     }
 
     @Override
     public void deletedPatient(Long patientId) {
-        Patient patient = patientRepository.findPatientById(patientId)
+        Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> {
                     log.error("Пациент не найден с id: {}", patientId);
                     return new ResourceNotFoundException("Patient", patientId);
-                    });
+                });
 
         policyRepository.delete(policyRepository.findById(patient.getPolicyOMS().getId())
                 .orElseThrow(() -> {
@@ -50,100 +73,145 @@ public class PatientServiceImpl implements PatientService {
     }
 
     @Override
-    public Patient findPatientById(Long patientId) {
-        return patientRepository.findPatientById(patientId)
+    public PatientWithActiveAttachmentResponse findPatientById(Long patientId) {
+
+        Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> {
                     log.error("Пациент не найден с id: {}", patientId);
                     return new ResourceNotFoundException("Patient", patientId);
                 });
+
+        return patientMapper.toActiveAttachmentResponse(patient);
     }
 
     @Override
-    public Patient createPatient(Patient patient, Long policyId) {
+    public PatientResponse createPatient(CreatePatientRequest request, Long policyId) {
         log.debug("Создание пациента: {} {}, полис ID: {}",
-                patient.getSurname(), patient.getName(), policyId);
+                request.getSurname(), request.getName(), policyId);
 
-        if (patient.getEmail() != null
-                && patientRepository.existsByEmail(patient.getEmail())) {
-            log.warn("Попытка создать пациента с существующим email: {}", patient.getEmail());
+        if (request.getEmail() != null
+                && patientRepository.existsByEmail(request.getEmail())) {
+            log.warn("Попытка создать пациента с существующим email: {}", request.getEmail());
             throw new ConflictException(
                     "email",
-                    patient.getEmail()
+                    request.getEmail()
                     );
         }
 
-        if (patient.getPhoneNumber() != null
-                && patientRepository.existsByPhoneNumber(patient.getPhoneNumber())) {
-            log.warn("Попытка создать пациента с существующим телефоном: {}", patient.getPhoneNumber());
+        if (request.getPhoneNumber() != null
+                && patientRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+            log.warn("Попытка создать пациента с существующим телефоном: {}", request.getPhoneNumber());
             throw new ConflictException(
                     "phone",
-                    patient.getPhoneNumber()
+                    request.getPhoneNumber()
             );
 
         }
 
-        if (patient.getSNILS() != null && patientRepository.existsBySNILS(patient.getSNILS())) {
-            log.warn("Попытка создать пациента с существующим SNILS: {}", patient.getSNILS());
+        if (request.getSnils() != null && patientRepository.existsBySnils(request.getSnils())) {
+            log.warn("Попытка создать пациента с существующим SNILS: {}", request.getSnils());
             throw new ConflictException(
                     "snils",
-                    patient.getSNILS()
+                    request.getSnils()
             );
 
         }
 
+        Patient patient = patientMapper.toEntity(request);
+
         if (policyId != null) {
-            PolicyOMS policy = policyRepository.findById(policyId)
-                    .orElseThrow(() -> {
-                        log.error("Полис не найден с id: {}", policyId);
-                        return new ResourceNotFoundException("Policy", policyId);
-                    });
-            policy.setPatient(patient);
-            patient.setPolicyOMS(policy);
+            PolicyOMSDTO policyDTO = policyService.findPolicyById(policyId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Policy", policyId));
+
+            PolicyOMS policyEntity = patientMapper.toPolicyEntity(policyDTO);
+
+            policyEntity.setPatient(patient);
+            patient.setPolicyOMS(policyEntity);
         }
 
-        log.info("Создан новый пациент с id: {}", patient.getId());
-        return patientRepository.save(patient);
+        Patient savedPatient = patientRepository.save(patient);
+
+        log.info("Создан новый пациент с id: {}", savedPatient.getId());
+        return patientMapper.toResponse(savedPatient);
     }
 
     @Override
-    public Page<Patient> findPatientByFIO(Pageable pageable, String fio) {
+    public Page<PatientWithActiveAttachmentResponse> findPatientByFIO(Pageable pageable, String fio) {
         log.debug("Поиск пациента по ФИО: {}", fio);
-        return patientRepository.findPatientByFIO(pageable, fio);
+
+        Page<Patient> patientPage = patientRepository.findPatientByFIO(pageable, fio);
+
+        return patientPage.map(patientMapper::toActiveAttachmentResponse);
     }
 
     @Override
-    public Page<Patient> findPatientByDateOfBirth(Pageable pageable, LocalDate dateOfBirth) {
+    public Page<PatientWithActiveAttachmentResponse> findPatientByDateOfBirth(Pageable pageable, LocalDate dateOfBirth) {
         log.debug("Поиск пациента по дате рождения: {}", dateOfBirth);
-        return patientRepository.findPatientByDateOfBirth(pageable, dateOfBirth);
+
+        Page<Patient> patientPage = patientRepository.findPatientByDateOfBirth(pageable, dateOfBirth);
+
+        return patientPage.map(patientMapper::toActiveAttachmentResponse);
     }
 
     @Override
-    public Page<Patient> findPatientBySex(Pageable pageable, SexType sexType) {
+    public Page<PatientWithActiveAttachmentResponse> findPatientBySex(Pageable pageable, SexType sexType) {
         log.debug("Поиск пациента по полу: {}", sexType);
-        return patientRepository.findPatientBySex(pageable, sexType);
+
+        Page<Patient> patientPage = patientRepository.findPatientBySex(pageable, sexType);
+
+        return patientPage.map(patientMapper::toActiveAttachmentResponse);
     }
 
     @Override
-    public Optional<Patient> findPatientByPhoneNumber(String phoneNumber) {
+    public Optional<PatientWithActiveAttachmentResponse> findPatientByPhoneNumber(String phoneNumber) {
         log.debug("Поиск пациента по номеру телефона: {}", phoneNumber);
-        return patientRepository.findPatientByPhoneNumber(phoneNumber);
+
+        Optional<Patient> patient = patientRepository.findPatientByPhoneNumber(phoneNumber);
+
+        return patient.map(patientMapper::toActiveAttachmentResponse);
     }
 
     @Override
-    public Optional<Patient> findPatientByEmail(String email) {
+    public Optional<PatientWithActiveAttachmentResponse> findPatientByEmail(String email) {
         log.debug("Поиск пациента по электронгой почте: {}", email);
-        return patientRepository.findPatientByEmail(email);
+
+        Optional<Patient> patient = patientRepository.findPatientByEmail(email);
+
+        return patient.map(patientMapper::toActiveAttachmentResponse);
     }
 
     @Override
-    public Optional<Patient> findPatientBySNILS(String snils) {
+    public Optional<PatientWithActiveAttachmentResponse> findPatientBySNILS(String snils) {
         log.debug("Поиск пациента по СНИЛСу: {}", snils);
-        return patientRepository.findPatientBySNILS(snils);
+
+        Optional<Patient> patient = patientRepository.findPatientBySnils(snils);
+
+        return patient.map(patientMapper::toActiveAttachmentResponse);
     }
 
     @Override
-    public Optional<Patient> findPatientByPolicyOMS(PolicyOMS policyOMS) {
+    public Optional<PatientWithActiveAttachmentResponse> findPatientByPolicyOMS(PolicyOMSDTO policyOMS) {
         log.debug("Поиск пациента по полису: {}", policyOMS);
-        return patientRepository.findByPolicyOMS(policyOMS);
+
+        if (policyOMS == null || policyOMS.getId() == null) {
+            log.warn("PolicyOMS или его ID равен null");
+            return Optional.empty();
+        }
+
+        return policyRepository.findById(policyOMS.getId())
+                .map(PolicyOMS::getPatient)
+                .map(patientMapper::toActiveAttachmentResponse);
+    }
+
+    @Override
+    public Optional<AttachmentResponse> findLastAttachment(PatientResponse patientResponse) {
+        log.debug("Поиск последнего прикрепления пациента: {}", patientResponse);
+
+        Patient patient = patientMapper.toEntity(patientResponse);
+
+        Optional<Attachment> attachment = attachmentRepository.
+                findTopByPatientIdOrderByDateOfBeginDesc(patient.getId());
+
+        return attachment.map(attachmentMapper::toResponse);
     }
 }

@@ -1,0 +1,41 @@
+databaseChangeLog:
+  - changeSet:
+      id: 7
+      author: daniil
+      changes:
+        - createTable:
+            tableName: email_message
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: message_text
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: shipping_address
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: exception_text
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: shipping_time
+                  type: timestamp
+                  constraints:
+                    nullable: false
+        - createIndex:
+            tableName: email_message
+            indexName: idx_shipping_time
+            columns:
+              - column:
+                  name: shipping_time

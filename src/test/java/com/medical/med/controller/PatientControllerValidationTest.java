@@ -1,9 +1,9 @@
 package com.medical.med.controller;
 
-import com.medical.med.DTO.CreatePatientRequest;
+import com.medical.med.DTO.request.CreatePatientRequest;
 import com.medical.med.model.Patient;
 import com.medical.med.model.PolicyOMS;
-import com.medical.med.model.SexType;
+import com.medical.med.model.enums.SexType;
 import com.medical.med.repository.PatientRepository;
 import com.medical.med.repository.PolicyRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -60,7 +60,7 @@ public class PatientControllerValidationTest {
                 .sex(SexType.MALE)
                 .phoneNumber("+79123547831")
                 .email("ivan@test.com")
-                .SNILS("14860360769");
+                .snils("14860360769");
     }
 
     @Test
@@ -170,7 +170,7 @@ public class PatientControllerValidationTest {
     void createPatient_shouldReturnBadRequest_whenSnilsIsNotCorrect() throws Exception {
 
         CreatePatientRequest request = validRequestBuilder()
-                .SNILS("33033356384")
+                .snils("33033356384")
                 .build();
 
         MvcResult result = MockResultBadRequest(request);
@@ -255,7 +255,7 @@ public class PatientControllerValidationTest {
         String createBody = result.getResponse().getContentAsString();
         String email = objectMapper.readTree(createBody).get("email").asString();
 
-        MvcResult getResult = mockMvc.perform(get("/api/v1/patients/find-by-email")
+        MvcResult getResult = mockMvc.perform(get("/api/v1/patients/email")
                         .contentType(MediaType.APPLICATION_JSON)
                         .param("email", email))
                 .andExpect(status().isOk())
@@ -280,7 +280,7 @@ public class PatientControllerValidationTest {
         JsonNode jsonNode = objectMapper.readTree(createBody);
         String sexType = jsonNode.get("sex").asText();
 
-        MvcResult getResult = mockMvc.perform(get("/api/v1/patients/find-by-sex-type")
+        MvcResult getResult = mockMvc.perform(get("/api/v1/patients/sex-type")
                         .contentType(MediaType.APPLICATION_JSON)
                         .param("sexType", sexType)
                         .param("page", "0")
@@ -308,7 +308,7 @@ public class PatientControllerValidationTest {
         String patronymic = patientNode.has("patronymic") ? patientNode.get("patronymic").asText() : "";
         String fio = surname + " " + name + (patronymic.isEmpty() ? "" : " " + patronymic);
 
-        MvcResult getResult = mockMvc.perform(get("/api/v1/patients/find-by-fio")
+        MvcResult getResult = mockMvc.perform(get("/api/v1/patients/fio")
                         .contentType(MediaType.APPLICATION_JSON)
                         .param("fio", fio)
                         .param("page", "0")
@@ -332,7 +332,7 @@ public class PatientControllerValidationTest {
         String createBody = result.getResponse().getContentAsString();
         String date = objectMapper.readTree(createBody).get("dateOfBirth").asString();
 
-        MvcResult getResult = mockMvc.perform(get("/api/v1/patients/find-by-date-of-birth")
+        MvcResult getResult = mockMvc.perform(get("/api/v1/patients/date-of-birth")
                         .contentType(MediaType.APPLICATION_JSON)
                         .param("dateOfBirth", date)
                         .param("page", "0")
@@ -360,7 +360,7 @@ public class PatientControllerValidationTest {
         assertNotNull(snils);
         assertFalse(snils.isEmpty());
 
-        MvcResult getResult = mockMvc.perform(get("/api/v1/patients/find-by-snils")
+        MvcResult getResult = mockMvc.perform(get("/api/v1/patients/snils")
                         .param("snils", snils))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -381,7 +381,7 @@ public class PatientControllerValidationTest {
         String createBody = result.getResponse().getContentAsString();
         String phoneNumber = objectMapper.readTree(createBody).get("phoneNumber").asString();
 
-        MvcResult getResult = mockMvc.perform(get("/api/v1/patients/fine-by-phone-number")
+        MvcResult getResult = mockMvc.perform(get("/api/v1/patients/phone")
                         .contentType(MediaType.APPLICATION_JSON)
                         .param("phoneNumber", phoneNumber))
                 .andExpect(status().isOk())
@@ -403,7 +403,7 @@ public class PatientControllerValidationTest {
         String createBody = result.getResponse().getContentAsString();
         Long patientId = objectMapper.readTree(createBody).get("id").asLong();
 
-        Patient patient = patientRepository.findPatientById(patientId)
+        Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new AssertionError("Patient not found with id: " + patientId));
 
         PolicyOMS policy = PolicyOMS.builder()
@@ -418,7 +418,7 @@ public class PatientControllerValidationTest {
         patientRepository.save(patient);
         assertNotNull(savedPolicy.getId());
 
-        MvcResult getResult = mockMvc.perform(get("/api/v1/patients/find-by-policy-number")
+        MvcResult getResult = mockMvc.perform(get("/api/v1/patients/policy")
                         .param("policyNumber", "1234567890123456"))
                 .andExpect(status().isOk())
                 .andReturn();

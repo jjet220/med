@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  sftp:
+    image: atmoz/sftp:latest
+    container_name: sftp-server
+    ports:
+      - "2222:22"
+    environment:
+      - SFTP_USERS=user:password:1001
+    volumes:
+      - ./sftp-data:/home/user/outgoing
+    restart: unless-stopped

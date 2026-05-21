@@ -3,6 +3,8 @@ package com.medical.med.exeption;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
+import java.time.LocalDate;
+
 @Getter
 public class BusinessException extends RuntimeException {
 
@@ -15,7 +17,9 @@ public class BusinessException extends RuntimeException {
         this.httpStatus = httpStatus;
     }
 
-    public BusinessException(String code, String message) {
-        this(code, message, HttpStatus.BAD_REQUEST);
+    public BusinessException(String message) {
+        super(message);
+        this.code = "BUSINESS_ERROR";
+        this.httpStatus = HttpStatus.BAD_REQUEST;
     }
 }

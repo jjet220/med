@@ -1,9 +1,13 @@
-package com.medical.med.DTO;
+package com.medical.med.DTO.response;
 
-import com.medical.med.model.SexType;
+import com.medical.med.DTO.PolicyOMSDTO;
+import com.medical.med.model.Address;
+import com.medical.med.model.IdentityDocument;
+import com.medical.med.model.enums.SexType;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Setter
@@ -22,4 +26,7 @@ public class PatientResponse {
     private String email;
     private String SNILS;
     private PolicyOMSDTO policy;
+    private List<AttachmentResponse> attachments;
+    private List<IdentityDocumentResponse> identityDocument;
+    private List<AddressResponse> address;
 }

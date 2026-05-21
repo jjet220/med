@@ -1,6 +1,6 @@
 package com.medical.med.exeption;
 
-import com.medical.med.DTO.ErrorResponse;
+import com.medical.med.DTO.response.ErrorResponse;
 import jakarta.validation.ConstraintViolation;
 import lombok.extern.slf4j.Slf4j;
 import jakarta.validation.ConstraintViolationException;

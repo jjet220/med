@@ -1,4 +1,4 @@
-package com.medical.med.DTO;
+package com.medical.med.DTO.response;
 
 import com.medical.med.exeption.ErrorDetail;
 import lombok.AllArgsConstructor;

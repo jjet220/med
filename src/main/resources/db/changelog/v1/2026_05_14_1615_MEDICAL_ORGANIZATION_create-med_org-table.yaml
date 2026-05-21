@@ -1,0 +1,33 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4
+      author: daniil
+      changes:
+        - createTable:
+            tableName: med_org
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: code
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+        - addForeignKeyConstraint:
+            baseTableName: attachments
+            baseColumnNames: mo_code
+            referencedTableName: med_org
+            referencedColumnNames: code
+            constraintName: fk_attachment_med_org
+            onDelete: RESTRICT

@@ -1,8 +1,9 @@
-package com.medical.med.DTO;
+package com.medical.med.DTO.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.medical.med.annotation.validation.ValidPhone;
 import com.medical.med.annotation.validation.ValidSNILS;
-import com.medical.med.model.SexType;
+import com.medical.med.model.enums.SexType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -17,6 +18,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreatePatientRequest {
+
     private Long id;
 
     @NotBlank(message = "Фамилия обязательна")
@@ -43,7 +45,8 @@ public class CreatePatientRequest {
     private String email;
 
     @ValidSNILS
-    private String SNILS;
+    @JsonProperty("snils")
+    private String snils;
 
     private Long policyId;
 }

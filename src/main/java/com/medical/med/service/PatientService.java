@@ -1,8 +1,11 @@
 package com.medical.med.service;
 
-import com.medical.med.model.Patient;
-import com.medical.med.model.PolicyOMS;
-import com.medical.med.model.SexType;
+import com.medical.med.DTO.*;
+import com.medical.med.DTO.request.CreatePatientRequest;
+import com.medical.med.DTO.response.AttachmentResponse;
+import com.medical.med.DTO.response.PatientResponse;
+import com.medical.med.DTO.response.PatientWithActiveAttachmentResponse;
+import com.medical.med.model.enums.SexType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -11,25 +14,27 @@ import java.util.Optional;
 
 public interface PatientService {
 
-    Patient updatePatient(Patient patient);
+    PatientResponse updatePatient(CreatePatientRequest patient, Long patientId );
 
     void deletedPatient(Long patientId);
 
-    Patient findPatientById(Long patientId);
+    PatientWithActiveAttachmentResponse findPatientById(Long patientId);
 
-    Patient createPatient(Patient patient, Long policyId);
+    PatientResponse createPatient(CreatePatientRequest patient, Long policyId);
 
-    Page<Patient> findPatientByFIO(Pageable pageable, String FIO);
+    Page<PatientWithActiveAttachmentResponse> findPatientByFIO(Pageable pageable, String FIO);
 
-    Page<Patient> findPatientByDateOfBirth(Pageable pageable, LocalDate dateOfBirth);
+    Page<PatientWithActiveAttachmentResponse> findPatientByDateOfBirth(Pageable pageable, LocalDate dateOfBirth);
 
-    Page<Patient> findPatientBySex(Pageable pageable, SexType sexType);
+    Page<PatientWithActiveAttachmentResponse> findPatientBySex(Pageable pageable, SexType sexType);
 
-    Optional<Patient> findPatientByPhoneNumber(String phoneNumber);
+    Optional<PatientWithActiveAttachmentResponse> findPatientByPhoneNumber(String phoneNumber);
 
-    Optional<Patient> findPatientByEmail(String email);
+    Optional<PatientWithActiveAttachmentResponse> findPatientByEmail(String email);
 
-    Optional<Patient> findPatientBySNILS(String SNILS);
+    Optional<PatientWithActiveAttachmentResponse> findPatientBySNILS(String SNILS);
 
-    Optional<Patient> findPatientByPolicyOMS(PolicyOMS policyOMS);
+    Optional<PatientWithActiveAttachmentResponse> findPatientByPolicyOMS(PolicyOMSDTO policyOMS);
+
+    Optional<AttachmentResponse> findLastAttachment(PatientResponse patient);
 }

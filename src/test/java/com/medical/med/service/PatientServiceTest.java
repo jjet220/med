@@ -1,10 +1,20 @@
 package com.medical.med.service;
 
+import com.medical.med.DTO.request.CreatePatientRequest;
+import com.medical.med.DTO.response.AttachmentResponse;
+import com.medical.med.DTO.response.PatientResponse;
+import com.medical.med.DTO.response.PatientWithActiveAttachmentResponse;
+import com.medical.med.DTO.PolicyOMSDTO;
 import com.medical.med.exeption.ConflictException;
 import com.medical.med.exeption.ResourceNotFoundException;
+import com.medical.med.mapper.PatientMapper;
+import com.medical.med.model.Attachment;
+import com.medical.med.model.MedicalOrganization;
 import com.medical.med.model.Patient;
-import com.medical.med.model.PolicyOMS;
-import com.medical.med.model.SexType;
+import com.medical.med.model.enums.AttachmentType;
+import com.medical.med.model.enums.SexType;
+import com.medical.med.repository.AttachmentRepository;
+import com.medical.med.repository.MedicalOrganizationRepository;
 import com.medical.med.repository.PatientRepository;
 import com.medical.med.service.impl.PatientServiceImpl;
 import com.medical.med.service.impl.PolicyServiceImpl;
@@ -12,13 +22,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -27,14 +39,19 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 
-@DataJpaTest
+@SpringBootTest
 @ActiveProfiles("test")
 @Import({PatientServiceImpl.class, PolicyServiceImpl.class})
 @ExtendWith(SpringExtension.class)
+@Transactional
+@Rollback
 public class PatientServiceTest {
 
     @Autowired
     private PolicyService policyService;
+
+    @Autowired
+    private PatientMapper patientMapper;
 
     @Autowired
     private PatientRepository patientRepository;
@@ -42,11 +59,20 @@ public class PatientServiceTest {
     @Autowired
     private PatientService patientService;
 
-    private Patient testPatient;
+    @Autowired
+    private AttachmentRepository attachmentRepository;
+
+    @Autowired
+    private MedicalOrganizationRepository medicalOrganizationRepository;
+
+    private CreatePatientRequest testPatient;
 
     @BeforeEach
     void setUp() {
-        testPatient = Patient.builder()
+
+        patientRepository.deleteAll();
+
+        testPatient = CreatePatientRequest.builder()
                 .surname("Иванов")
                 .name("Иван")
                 .patronymic("Иванович")
@@ -54,13 +80,13 @@ public class PatientServiceTest {
                 .sex(SexType.MALE)
                 .phoneNumber("+79123547831")
                 .email("ivan@test.com")
-                .SNILS("12345678901")
+                .snils("12345678901")
                 .build();
     }
 
     @Test
     public void createPatient_shouldSaveAndReturnPatient_whenValidData() {
-        Patient saved = patientService.createPatient(testPatient, null);
+        PatientResponse saved = patientService.createPatient(testPatient, null);
 
         assertNotNull(saved);
         assertNotNull(saved.getId());
@@ -72,16 +98,16 @@ public class PatientServiceTest {
     @Test
     void createPatient_shouldThrowConflictException_whenEmailAlreadyExists() {
 
-        patientRepository.save(testPatient);
+        patientRepository.save(patientMapper.toEntity(testPatient));
 
-        Patient duplicatePatient = new Patient();
+        CreatePatientRequest duplicatePatient = new CreatePatientRequest();
         duplicatePatient.setSurname("Петров");
         duplicatePatient.setName("Петр");
         duplicatePatient.setDateOfBirth(LocalDate.of(1995, 5, 10));
         duplicatePatient.setSex(SexType.MALE);
         duplicatePatient.setPhoneNumber("+79998887766");
         duplicatePatient.setEmail("ivan@test.com");
-        duplicatePatient.setSNILS("98765432109");
+        duplicatePatient.setSnils("98765432109");
 
         ConflictException exception = assertThrows(ConflictException.class,
                 () -> patientService.createPatient(duplicatePatient, null));
@@ -93,16 +119,16 @@ public class PatientServiceTest {
     @Test
     void createPatient_shouldThrowConflictException_whenPhoneNumberAlreadyExists() {
 
-        patientRepository.save(testPatient);
+        patientRepository.save(patientMapper.toEntity(testPatient));
 
-        Patient duplicatePatient = new Patient();
+        CreatePatientRequest duplicatePatient = new CreatePatientRequest();
         duplicatePatient.setSurname("Петров");
         duplicatePatient.setName("Петр");
         duplicatePatient.setDateOfBirth(LocalDate.of(1995, 5, 10));
         duplicatePatient.setSex(SexType.MALE);
         duplicatePatient.setPhoneNumber("+79123547831");
         duplicatePatient.setEmail("petr@test.com");
-        duplicatePatient.setSNILS("98765432109");
+        duplicatePatient.setSnils("98765432109");
 
         ConflictException exception = assertThrows(ConflictException.class,
                 () -> patientService.createPatient(duplicatePatient, null));
@@ -114,16 +140,16 @@ public class PatientServiceTest {
     @Test
     void createPatient_shouldThrowConflictException_whenSnilsAlreadyExists() {
 
-        patientRepository.save(testPatient);
+        patientRepository.save(patientMapper.toEntity(testPatient));
 
-        Patient duplicatePatient = new Patient();
+        CreatePatientRequest duplicatePatient = new CreatePatientRequest();
         duplicatePatient.setSurname("Петров");
         duplicatePatient.setName("Петр");
         duplicatePatient.setDateOfBirth(LocalDate.of(1995, 5, 10));
         duplicatePatient.setSex(SexType.MALE);
         duplicatePatient.setPhoneNumber("+79225549125");
         duplicatePatient.setEmail("petr@test.com");
-        duplicatePatient.setSNILS("12345678901");
+        duplicatePatient.setSnils("12345678901");
 
         ConflictException exception = assertThrows(ConflictException.class,
                 () -> patientService.createPatient(duplicatePatient, null));
@@ -135,9 +161,9 @@ public class PatientServiceTest {
     @Test
     void findPatientById_shouldReturnPatient_whenIdExists() {
 
-        Patient saved = patientRepository.save(testPatient);
+        Patient saved = patientRepository.save(patientMapper.toEntity(testPatient));
 
-        Patient found = patientService.findPatientById(saved.getId());
+        PatientWithActiveAttachmentResponse found = patientService.findPatientById(saved.getId());
 
         assertNotNull(found);
         assertEquals(saved.getId(), found.getId());
@@ -147,9 +173,9 @@ public class PatientServiceTest {
     @Test
     void findPatientByEmail_shouldReturnPatient_whenIdExists() {
 
-        Patient saved = patientRepository.save(testPatient);
+        Patient saved = patientRepository.save(patientMapper.toEntity(testPatient));
 
-        Optional<Patient> found = patientService.findPatientByEmail("ivan@test.com");
+        Optional<PatientWithActiveAttachmentResponse> found = patientService.findPatientByEmail("ivan@test.com");
 
         assertNotNull(found.isPresent());
         assertEquals(saved.getId(), found.get().getId());
@@ -159,9 +185,9 @@ public class PatientServiceTest {
     @Test
     void findPatientByPhoneNumber_shouldReturnPatient_whenIdExists() {
 
-        Patient saved = patientRepository.save(testPatient);
+        Patient saved = patientRepository.save(patientMapper.toEntity(testPatient));
 
-        Optional<Patient> found = patientService.findPatientByPhoneNumber("+79123547831");
+        Optional<PatientWithActiveAttachmentResponse> found = patientService.findPatientByPhoneNumber("+79123547831");
 
         assertNotNull(found.isPresent());
         assertEquals(saved.getId(), found.get().getId());
@@ -171,32 +197,32 @@ public class PatientServiceTest {
     @Test
     void findPatientBySNILS_shouldReturnPatient_whenIdExists() {
 
-        Patient saved = patientRepository.save(testPatient);
+        Patient saved = patientRepository.save(patientMapper.toEntity(testPatient));
 
-        Optional<Patient> found = patientService.findPatientBySNILS("12345678901");
+        Optional<PatientWithActiveAttachmentResponse> found = patientService.findPatientBySNILS("12345678901");
 
         assertNotNull(found.isPresent());
         assertEquals(saved.getId(), found.get().getId());
-        assertEquals(saved.getSNILS(), found.get().getSNILS());
+        assertEquals(saved.getSnils(), found.get().getSNILS());
     }
 
 
     @Test
     void findPatientByFIO_shouldReturnPatient_whenIdExists() {
 
-        Patient saved = patientRepository.save(testPatient);
+        Patient saved = patientRepository.save(patientMapper.toEntity(testPatient));
 
         Pageable pageable = PageRequest.of(0, 20);
         String fullFIO = "Иванов Иван Иванович";
 
-        Page<Patient> foundPage = patientService.findPatientByFIO(pageable, fullFIO);
+        Page<PatientWithActiveAttachmentResponse> foundPage = patientService.findPatientByFIO(pageable, fullFIO);
 
         assertNotNull(foundPage);
         assertFalse(foundPage.isEmpty());
         assertEquals(1, foundPage.getTotalElements());
         assertEquals(1, foundPage.getContent().size());
 
-        Patient found = foundPage.getContent().get(0);
+        PatientWithActiveAttachmentResponse found = foundPage.getContent().get(0);
         assertEquals(saved.getId(), found.getId());
         assertEquals(saved.getSurname(), found.getSurname());
         assertEquals(saved.getName(), found.getName());
@@ -206,19 +232,19 @@ public class PatientServiceTest {
     @Test
     void findPatientBySexType_shouldReturnPatient_whenIdExists() {
 
-        Patient saved = patientRepository.save(testPatient);
+        Patient saved = patientRepository.save(patientMapper.toEntity(testPatient));
 
         Pageable pageable = PageRequest.of(0, 20);
         SexType type = SexType.MALE;
 
-        Page<Patient> foundPage = patientService.findPatientBySex(pageable, type);
+        Page<PatientWithActiveAttachmentResponse> foundPage = patientService.findPatientBySex(pageable, type);
 
         assertNotNull(foundPage);
         assertFalse(foundPage.isEmpty());
         assertEquals(1, foundPage.getTotalElements());
         assertEquals(1, foundPage.getContent().size());
 
-        Patient found = foundPage.getContent().get(0);
+        PatientWithActiveAttachmentResponse found = foundPage.getContent().get(0);
         assertEquals(saved.getId(), found.getId());
         assertEquals(saved.getSex(), found.getSex());
     }
@@ -226,40 +252,44 @@ public class PatientServiceTest {
     @Test
     void findPatientByDateOfBirth_shouldReturnPatient_whenIdExists() {
 
-        Patient saved = patientRepository.save(testPatient);
+        Patient saved = patientRepository.save(patientMapper.toEntity(testPatient));
 
         Pageable pageable = PageRequest.of(0, 20);
         LocalDate date = LocalDate.of(1999, 1, 23);
 
-        Page<Patient> foundPage = patientService.findPatientByDateOfBirth(pageable, date);
+        Page<PatientWithActiveAttachmentResponse> foundPage = patientService.findPatientByDateOfBirth(pageable, date);
 
         assertNotNull(foundPage);
         assertFalse(foundPage.isEmpty());
         assertEquals(1, foundPage.getTotalElements());
         assertEquals(1, foundPage.getContent().size());
 
-        Patient found = foundPage.getContent().get(0);
+        PatientWithActiveAttachmentResponse found = foundPage.getContent().get(0);
         assertEquals(saved.getId(), found.getId());
         assertEquals(saved.getDateOfBirth(), found.getDateOfBirth());
     }
 
     @Test
     void findPatientByPolicy_shouldReturnPatient_whenIdExists() {
+        Patient saved = patientRepository.save(patientMapper.toEntity(testPatient));
 
-        Patient saved = patientRepository.save(testPatient);
-
-        PolicyOMS policyOMS = PolicyOMS.builder()
-                .patient(saved)
+        PolicyOMSDTO policyDTO = PolicyOMSDTO.builder()
+                .patientId(saved.getId())
                 .singlePolicyNumber("1234567891234567")
-                .dateAndTimeOfCreation(LocalDateTime.of(2000, 5, 12, 13, 30)).build();
+                .dateAndTimeOfCreation(LocalDateTime.of(2000, 5, 12, 13, 30))
+                .build();
 
-        policyService.createPolicy(policyOMS);
+        PolicyOMSDTO createdPolicy = policyService.createPolicy(policyDTO, saved.getId());
 
-        Optional<Patient> found = patientService.findPatientByPolicyOMS(policyOMS);
+        saved.setPolicyOMS(patientMapper.toPolicyEntity(createdPolicy));
+        patientRepository.save(saved);
 
-        assertNotNull(found.isPresent());
+        System.out.println("Created policy ID: " + createdPolicy.getId());
+
+        Optional<PatientWithActiveAttachmentResponse> found = patientService.findPatientByPolicyOMS(createdPolicy);
+
+        assertTrue(found.isPresent());
         assertEquals(saved.getId(), found.get().getId());
-        assertEquals(saved.getPolicyOMS(), found.get().getPolicyOMS());
     }
 
     @Test
@@ -274,4 +304,52 @@ public class PatientServiceTest {
         assertTrue(exception.getMessage().contains(String.valueOf(nonExistentId)));
     }
 
+    @Test
+    void findLastAttachment_shouldReturnPatient_whenLastAttachmentExist() {
+        Patient saved = patientRepository.save(patientMapper.toEntity(testPatient));
+
+        MedicalOrganization medicalOrganizationOne = MedicalOrganization.builder()
+                .code("1233344")
+                .name("Organ")
+                .build();
+
+        MedicalOrganization medicalOrganizationSecond = MedicalOrganization.builder()
+                .code("6454454")
+                .name("Medical")
+                .build();
+
+        medicalOrganizationOne = medicalOrganizationRepository.save(medicalOrganizationOne);
+        medicalOrganizationSecond = medicalOrganizationRepository.save(medicalOrganizationSecond);
+
+        Attachment attachmentOne = Attachment.builder()
+                .patient(saved)
+                .dateOfBegin(LocalDate.now().minusDays(100))
+                .dateOfEnd(LocalDate.now().minusDays(1))
+                .medicalOrganization(medicalOrganizationOne)
+                .type(AttachmentType.OUTPATIENT)
+                .build();
+
+        Attachment attachmentSecond = Attachment.builder()
+                .patient(saved)
+                .dateOfBegin(LocalDate.now())
+                .dateOfEnd(LocalDate.now().plusYears(1))
+                .medicalOrganization(medicalOrganizationSecond)
+                .type(AttachmentType.OUTPATIENT)
+                .build();
+
+        attachmentRepository.save(attachmentOne);
+        attachmentRepository.save(attachmentSecond);
+
+        medicalOrganizationOne.setAttachments(attachmentOne);
+        medicalOrganizationSecond.setAttachments(attachmentSecond);
+
+        medicalOrganizationRepository.save(medicalOrganizationOne);
+        medicalOrganizationRepository.save(medicalOrganizationSecond);
+
+        Optional<AttachmentResponse> lastAttachment =
+                patientService.findLastAttachment(patientMapper.toResponse(saved));
+
+        assertTrue(lastAttachment.isPresent());
+        assertEquals(lastAttachment.get().getId(), attachmentSecond.getId());
+    }
 }

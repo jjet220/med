@@ -3,3 +3,13 @@ databaseChangeLog:
       file: db/changelog/v1/2026_05_03_1944_PATIENT_create-patients-table.yaml
   - include:
       file: db/changelog/v1/2026_05_03_1945_POLICY_create-policys-oms-table.yaml
+  - include:
+      file: db/changelog/v1/2026_05_14_1559_ATTACHMENT_create-attachments-table.yaml
+  - include:
+      file: db/changelog/v1/2026_05_14_1615_MEDICAL_ORGANIZATION_create-med_org-table.yaml
+  - include:
+      file: db/changelog/v1/2026_05_18_1745_IDENTITY_DOCUMENT_create-identity-documents-table.yaml
+  - include:
+      file: db/changelog/v1/2026_05_20_1550_ADDRESS_create-address-table.yaml
+  - include:
+      file: db/changelog/v1/2026_05_21_1405_EMAIL_MESSAGE_create-email-message-table.yaml

@@ -2,7 +2,7 @@ package com.medical.med.repository;
 
 import com.medical.med.model.Patient;
 import com.medical.med.model.PolicyOMS;
-import com.medical.med.model.SexType;
+import com.medical.med.model.enums.SexType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,9 +13,10 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 public interface PatientRepository extends JpaRepository<Patient, Long> {
-    Optional<Patient> findPatientById(Long patientId);
+    Optional<Patient> findById(Long patientId);
 
-    @Query("SELECT p FROM Patient p WHERE CONCAT(p.surname, ' ', p.name, ' ', COALESCE(p.patronymic, '')) = :fio")
+    @Query("SELECT p FROM Patient p WHERE CONCAT" +
+            "(p.surname, ' ', p.name, ' ', COALESCE(p.patronymic, '')) = :fio")
     Page<Patient> findPatientByFIO(Pageable pageable, @Param("fio") String fio);
 
     Page<Patient> findPatientByDateOfBirth(Pageable pageable, LocalDate dateOfBirth);
@@ -26,7 +27,7 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
 
     Optional<Patient> findPatientByEmail(String email);
 
-    Optional<Patient> findPatientBySNILS(String snils);
+    Optional<Patient> findPatientBySnils(String snils);
 
     Optional<Patient> findByPolicyOMS(PolicyOMS policyOMS);
 
@@ -34,5 +35,5 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
 
     Boolean existsByPhoneNumber(String phoneNumber);
 
-    Boolean existsBySNILS(String snils);
+    Boolean existsBySnils(String snils);
 }

@@ -1,0 +1,52 @@
+databaseChangeLog:
+  - changeSet:
+      id: 5
+      author: daniil
+      changes:
+        - createTable:
+            tableName: identity_documents
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: patient_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: series
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: number
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: issued_at
+                  type: date
+                  constraints:
+                    nullable: false
+              - column:
+                  name: issued_by
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: identity_documents
+            baseColumnNames: patient_id
+            referencedTableName: patients
+            referencedColumnNames: id
+            constraintName: fk_identity_document_patient
+            onDelete: CASCADE

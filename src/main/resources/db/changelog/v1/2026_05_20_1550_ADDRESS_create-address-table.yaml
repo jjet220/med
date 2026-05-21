@@ -1,0 +1,72 @@
+databaseChangeLog:
+  - changeSet:
+      id: 6
+      author: daniil
+      changes:
+        - createTable:
+            tableName: address
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: patient_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: address_type
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: country
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: region
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: locality_type
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: locality_name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: street
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: house_number
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: is_private_house
+                  type: boolean
+                  constraints:
+                    nullable: true
+              - column:
+                  name: apartment_number
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+        - addForeignKeyConstraint:
+            baseTableName: address
+            baseColumnNames: patient_id
+            referencedTableName: patients
+            referencedColumnNames: id
+            constraintName: fk_address_patient
+            onDelete: CASCADE

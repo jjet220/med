@@ -1,0 +1,45 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3
+      author: daniil
+      changes:
+        - createTable:
+            tableName: attachments
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: patient_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: mo_code
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: date_begin
+                  type: date
+                  constraints:
+                    nullable: false
+              - column:
+                  name: date_end
+                  type: date
+        - addForeignKeyConstraint:
+            baseTableName: attachments
+            baseColumnNames: patient_id
+            referencedTableName: patients
+            referencedColumnNames: id
+            constraintName: fk_attachment_patient
+            onDelete: CASCADE
